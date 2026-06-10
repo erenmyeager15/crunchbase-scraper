@@ -99,7 +99,26 @@ Actor.main(async () => {
     sessionPoolOptions,
     maxConcurrency: 5,
     maxRequestRetries: MAX_RETRIES,
-    requestHandlerTimeoutSecs: 60,
+    requestHandlerTimeoutSecs: 180,
+    navigationTimeoutSecs: 90,
+    retryOnBlocked: true,
+
+    preNavigationHooks: [
+      async ({ page, session }) => {
+        // Warm up the session on the Cloudflare-lighter homepage so a cf_clearance
+        // cookie is issued, then the org-page navigation reuses it. Once per session.
+        const s = session as (typeof session & { userData?: Record<string, unknown> }) | undefined;
+        if (s && !(s.userData?.cbWarmed)) {
+          try {
+            await page.goto('https://www.crunchbase.com/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await page.waitForTimeout(4000 + Math.floor(Math.random() * 3000));
+            if (s.userData) s.userData.cbWarmed = true;
+          } catch {
+            /* warm-up best effort */
+          }
+        }
+      },
+    ],
 
     postNavigationHooks: [
       async ({ page, request, log }) => {
