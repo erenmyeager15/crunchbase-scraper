@@ -1,0 +1,73 @@
+{
+  "title": "Crunchbase Scraper Input",
+  "description": "Configure what to scrape from Crunchbase. Provide company URLs, company names, or search by industry/location/funding stage.",
+  "type": "object",
+  "schemaVersion": 1,
+  "required": [],
+  "properties": {
+    "companyUrls": {
+      "title": "Company Crunchbase URLs",
+      "description": "List of full Crunchbase company URLs to scrape. Example: https://www.crunchbase.com/organization/openai",
+      "type": "array",
+      "editor": "stringList",
+      "prefill": [],
+      "uniqueItems": true
+    },
+    "companyNames": {
+      "title": "Company Names",
+      "description": "List of company names to look up on Crunchbase. Each name is resolved to its Crunchbase organization page.",
+      "type": "array",
+      "editor": "stringList",
+      "default": ["OpenAI"],
+      "prefill": ["OpenAI", "Anthropic"],
+      "uniqueItems": true
+    },
+    "searchIndustry": {
+      "title": "Search by Industry",
+      "description": "Search Crunchbase organizations by industry or category. Example: 'Artificial Intelligence', 'FinTech', 'SaaS'",
+      "type": "string",
+      "editor": "textfield",
+      "prefill": ""
+    },
+    "searchLocation": {
+      "title": "Search by Location",
+      "description": "Filter search results by location (city, state, or country). Example: 'San Francisco', 'United States'",
+      "type": "string",
+      "editor": "textfield",
+      "prefill": ""
+    },
+    "searchFundingStage": {
+      "title": "Search by Funding Stage",
+      "description": "Filter search results by funding stage.",
+      "type": "string",
+      "editor": "select",
+      "default": "",
+      "enum": ["", "seed", "series_a", "series_b", "series_c", "series_d", "series_e_plus", "ipo"],
+      "enumTitles": ["All Stages", "Seed", "Series A", "Series B", "Series C", "Series D", "Series E+", "IPO"]
+    },
+    "maxResults": {
+      "title": "Max Results",
+      "description": "Maximum number of company profiles to scrape (search mode only).",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10000,
+      "default": 100,
+      "editor": "number"
+    },
+    "proxyConfiguration": {
+      "title": "Proxy Configuration",
+      "description": "Residential proxies are strongly recommended for reliable scraping.",
+      "type": "object",
+      "editor": "proxy",
+      "default": {
+        "useApifyProxy": true,
+        "apifyProxyGroups": ["RESIDENTIAL"]
+      },
+      "prefill": {
+        "useApifyProxy": true,
+        "apifyProxyGroups": ["RESIDENTIAL"],
+        "apifyProxyCountry": "US"
+      }
+    }
+  }
+}

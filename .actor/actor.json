@@ -1,0 +1,78 @@
+{
+  "actorSpecification": 1,
+  "name": "crunchbase-scraper",
+  "title": "Crunchbase Scraper - Company & Funding Data",
+  "description": "Scrape Crunchbase for company profiles and funding data: description, HQ, employees, total funding, rounds, investors, founders, industries, and social links. Supports company URLs, names, and industry search.",
+  "version": "1.0",
+  "dockerfile": "Dockerfile",
+  "input": "../INPUT_SCHEMA.json",
+  "pricingInfo": {
+    "pricingModel": "PAY_PER_EVENT",
+    "pricingPerEvent": {
+      "actorChargeEvents": {
+        "company-scraped": {
+          "eventTitle": "Company scraped",
+          "eventDescription": "Charged once for each company profile successfully scraped from Crunchbase.",
+          "eventPriceUsd": 0.005,
+          "isPrimaryEvent": true,
+          "isOneTimeEvent": false
+        }
+      }
+    }
+  },
+  "categories": ["BUSINESS", "LEAD_GENERATION", "SEO_TOOLS"],
+  "minMemoryMbytes": 2048,
+  "maxMemoryMbytes": 8192,
+  "defaultRunOptions": {
+    "memoryMbytes": 4096,
+    "timeoutSecs": 43200
+  },
+  "storages": {
+    "dataset": {
+      "actorSpecification": 1,
+      "views": {
+        "overview": {
+          "title": "Company records",
+          "transformation": {
+            "fields": [
+              "companyName",
+              "crunchbaseUrl",
+              "website",
+              "description",
+              "foundedDate",
+              "HQCity",
+              "HQCountry",
+              "companyType",
+              "operatingStatus",
+              "employeeCountRange",
+              "totalFundingAmount",
+              "numberOfFundingRounds",
+              "lastFundingDate",
+              "lastFundingType",
+              "lastFundingAmount",
+              "industriesList",
+              "foundersList",
+              "linkedInUrl",
+              "scrapedTimestamp"
+            ]
+          },
+          "display": {
+            "component": "table",
+            "properties": {
+              "companyName": { "label": "Company", "format": "text" },
+              "website": { "label": "Website", "format": "link" },
+              "HQCity": { "label": "City", "format": "text" },
+              "HQCountry": { "label": "Country", "format": "text" },
+              "employeeCountRange": { "label": "Employees", "format": "text" },
+              "totalFundingAmount": { "label": "Total Funding", "format": "text" },
+              "numberOfFundingRounds": { "label": "Rounds", "format": "number" },
+              "lastFundingType": { "label": "Last Round", "format": "text" },
+              "crunchbaseUrl": { "label": "Crunchbase", "format": "link" },
+              "scrapedTimestamp": { "label": "Scraped At", "format": "date" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

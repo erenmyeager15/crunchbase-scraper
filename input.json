@@ -1,0 +1,13 @@
+{
+  "companyNames": ["OpenAI", "Anthropic"],
+  "companyUrls": [],
+  "searchIndustry": "",
+  "searchLocation": "",
+  "searchFundingStage": "",
+  "maxResults": 5,
+  "proxyConfiguration": {
+    "useApifyProxy": true,
+    "apifyProxyGroups": ["RESIDENTIAL"],
+    "apifyProxyCountry": "US"
+  }
+}
