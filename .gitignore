@@ -7,3 +7,7 @@ dist/
 *.tgz
 .DS_Store
 Thumbs.db
+
+storage/
+apify_storage/
+crawlee_storage/

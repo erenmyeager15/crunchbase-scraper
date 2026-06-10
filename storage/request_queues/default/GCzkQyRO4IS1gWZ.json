@@ -1,9 +1,0 @@
-{
-	"id": "GCzkQyRO4IS1gWZ",
-	"json": "{\"id\":\"GCzkQyRO4IS1gWZ\",\"url\":\"https://www.crunchbase.com/organization/openai\",\"loadedUrl\":\"https://www.crunchbase.com/organization/openai\",\"uniqueKey\":\"https://www.crunchbase.com/organization/openai\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{},\"userData\":{\"label\":\"companyProfile\",\"searchTerm\":\"OpenAI\",\"__crawlee\":{\"state\":4}},\"handledAt\":\"2026-06-10T15:48:59.785Z\"}",
-	"method": "GET",
-	"orderNo": null,
-	"retryCount": 0,
-	"uniqueKey": "https://www.crunchbase.com/organization/openai",
-	"url": "https://www.crunchbase.com/organization/openai"
-}
