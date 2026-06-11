@@ -2,16 +2,90 @@ import { PlaywrightCrawler, log } from 'crawlee';
 import { Actor } from 'apify';
 import { ActorInput } from './types.js';
 import { COMPANY_ROUTES, RouteHandlerContext } from './routes.js';
+import { runCrunchbaseApiMode } from './api.js';
 
 const MAX_SESSION_USES = 15;
 const MIN_DELAY_MS = 2000;
 const MAX_DELAY_MS = 5000;
 const MAX_RETRIES = 3;
 
+interface BrowserCookie {
+  name: string;
+  value: string;
+  domain?: string;
+  path?: string;
+  expires?: number;
+  httpOnly?: boolean;
+  secure?: boolean;
+  sameSite?: 'Strict' | 'Lax' | 'None';
+  url?: string;
+}
+
+function normalizeSameSite(value: unknown): BrowserCookie['sameSite'] {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.toLowerCase();
+  if (normalized === 'strict') return 'Strict';
+  if (normalized === 'lax') return 'Lax';
+  if (normalized === 'none' || normalized === 'no_restriction') return 'None';
+  return undefined;
+}
+
+function parseCrunchbaseCookies(rawCookies: string | undefined): BrowserCookie[] {
+  const trimmed = rawCookies?.trim();
+  if (!trimmed) return [];
+
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    if (Array.isArray(parsed)) {
+      return parsed
+        .filter((cookie): cookie is Record<string, unknown> => Boolean(cookie && typeof cookie === 'object'))
+        .map((cookie): BrowserCookie => {
+          const normalized: BrowserCookie = {
+            name: String(cookie.name ?? ''),
+            value: String(cookie.value ?? ''),
+            domain: typeof cookie.domain === 'string' ? cookie.domain : '.crunchbase.com',
+            path: typeof cookie.path === 'string' ? cookie.path : '/',
+            secure: typeof cookie.secure === 'boolean' ? cookie.secure : true,
+          };
+          if (typeof cookie.expires === 'number') normalized.expires = cookie.expires;
+          if (typeof cookie.expirationDate === 'number') normalized.expires = cookie.expirationDate;
+          if (typeof cookie.httpOnly === 'boolean') normalized.httpOnly = cookie.httpOnly;
+          const sameSite = normalizeSameSite(cookie.sameSite);
+          if (sameSite) normalized.sameSite = sameSite;
+          if (typeof cookie.url === 'string') normalized.url = cookie.url;
+          return normalized;
+        })
+        .filter((cookie) => cookie.name && cookie.value);
+    }
+  } catch {
+    // Fall back to Cookie header format below.
+  }
+
+  return trimmed
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part): BrowserCookie | null => {
+      const separator = part.indexOf('=');
+      if (separator <= 0) return null;
+      const name = part.slice(0, separator).trim();
+      if (/^(path|domain|expires|max-age|samesite)$/i.test(name)) return null;
+
+      return {
+        name,
+        value: part.slice(separator + 1).trim(),
+        domain: '.crunchbase.com',
+        path: '/',
+        secure: true,
+      };
+    })
+    .filter((cookie): cookie is BrowserCookie => Boolean(cookie?.name && cookie.value));
+}
+
 function buildSearchUrl(input: {
-  searchIndustry: string;
-  searchLocation: string;
-  searchFundingStage: string;
+  searchIndustry?: string;
+  searchLocation?: string;
+  searchFundingStage?: string;
 }): string | null {
   const { searchIndustry, searchLocation, searchFundingStage } = input;
   if (searchIndustry) {
@@ -28,9 +102,9 @@ function buildSearchUrl(input: {
   return null;
 }
 
-function buildStartUrls(input: ActorInput): { url: string; userData: { label: string; searchTerm?: string } }[] {
+function buildStartUrls(input: ActorInput): { url: string; userData: { label: string; searchTerm?: string; maxResults?: number } }[] {
   const { companyUrls = [], companyNames = [], searchIndustry, searchLocation, searchFundingStage } = input;
-  const urls: { url: string; userData: { label: string; searchTerm?: string } }[] = [];
+  const urls: { url: string; userData: { label: string; searchTerm?: string; maxResults?: number } }[] = [];
 
   for (const raw of companyUrls) {
     const url = raw?.trim();
@@ -57,7 +131,7 @@ function buildStartUrls(input: ActorInput): { url: string; userData: { label: st
   if (searchUrl) {
     urls.push({
       url: searchUrl,
-      userData: { label: 'searchResults', searchTerm: searchIndustry || searchLocation || searchFundingStage },
+      userData: { label: 'searchResults', searchTerm: searchIndustry || searchLocation || searchFundingStage, maxResults: input.maxResults ?? 10 },
     });
   }
 
@@ -71,12 +145,31 @@ Actor.main(async () => {
     throw new Error('INPUT_REQUIRED: Provide companyUrls, companyNames, or search parameters.');
   }
 
-  const { maxResults = 100, proxyConfiguration } = input;
+  const dataSource = input.dataSource ?? 'auto';
+  if (dataSource !== 'browser' && input.crunchbaseApiKey?.trim()) {
+    log.info('Using Crunchbase API mode because crunchbaseApiKey was supplied.');
+    await runCrunchbaseApiMode(input);
+    await Actor.exit();
+    return;
+  }
+
+  if (dataSource === 'api') {
+    await runCrunchbaseApiMode(input);
+    await Actor.exit();
+    return;
+  }
+
+  const { maxResults = 10, proxyConfiguration } = input;
   const startUrls = buildStartUrls(input);
+  const crunchbaseCookies = parseCrunchbaseCookies(input.crunchbaseCookies);
 
   if (startUrls.length === 0) {
     throw new Error('NO_INPUT: Supply companyUrls, companyNames, or searchIndustry/searchLocation/searchFundingStage.');
   }
+
+  log.info(crunchbaseCookies.length
+    ? `Loaded ${crunchbaseCookies.length} Crunchbase cookie(s) for browser mode.`
+    : 'No Crunchbase cookies supplied; browser mode may be blocked by Cloudflare.');
 
   let proxy;
   if (proxyConfiguration?.useApifyProxy) {
@@ -102,9 +195,26 @@ Actor.main(async () => {
     requestHandlerTimeoutSecs: 180,
     navigationTimeoutSecs: 90,
     retryOnBlocked: true,
+    headless: false,
+    browserPoolOptions: {
+      useFingerprints: true,
+    },
+    launchContext: {
+      useChrome: true,
+      launchOptions: {
+        args: ['--disable-blink-features=AutomationControlled', '--no-sandbox', '--disable-dev-shm-usage'],
+      },
+    },
 
     preNavigationHooks: [
       async ({ page, session }) => {
+        if (crunchbaseCookies.length) {
+          await page.context().addCookies(crunchbaseCookies.map((cookie) => ({
+            ...cookie,
+            url: cookie.url ?? (cookie.domain ? undefined : 'https://www.crunchbase.com'),
+          })));
+        }
+
         // Warm up the session on the Cloudflare-lighter homepage so a cf_clearance
         // cookie is issued, then the org-page navigation reuses it. Once per session.
         const s = session as (typeof session & { userData?: Record<string, unknown> }) | undefined;
@@ -125,23 +235,8 @@ Actor.main(async () => {
         const jitter = Math.floor(Math.random() * (MAX_DELAY_MS - MIN_DELAY_MS) + MIN_DELAY_MS);
         await page.waitForTimeout(jitter);
 
-        if (request.userData.label !== 'searchResults') return;
-
-        try {
-          const nextButton = await page.$('a[aria-label="Next"], button[aria-label="Next page"]');
-          const nextLink = nextButton ? await nextButton.getAttribute('href') : null;
-          if (nextLink) {
-            const full = nextLink.startsWith('http') ? nextLink : `https://www.crunchbase.com${nextLink}`;
-            await crawler.addRequests([{
-              url: full,
-              userData: {
-                label: 'searchResults',
-                searchTerm: request.userData.searchTerm,
-              },
-            }]);
-          }
-        } catch (err) {
-          log.debug(`Pagination check failed: ${(err as Error).message}`);
+        if (request.userData.label === 'searchResults') {
+          log.debug('Search-result pagination is intentionally capped to the first rendered page in browser mode. Use API mode for larger discovery jobs.');
         }
       },
     ],

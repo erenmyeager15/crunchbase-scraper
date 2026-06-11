@@ -184,6 +184,7 @@ export const COMPANY_ROUTES: Record<string, (ctx: RouteHandlerContext) => Promis
 
   'searchResults': async ({ page, request, log, crawler, session }) => {
     const searchTerm = request.userData.searchTerm;
+    const maxResults = typeof request.userData.maxResults === 'number' ? request.userData.maxResults : 10;
 
     log.info(`Processing search results for: ${searchTerm}`);
 
@@ -204,7 +205,7 @@ export const COMPANY_ROUTES: Record<string, (ctx: RouteHandlerContext) => Promis
     const uniqueLinks = [...new Set(links)];
     log.info(`Found ${uniqueLinks.length} company links from search.`);
 
-    for (const link of uniqueLinks) {
+    for (const link of uniqueLinks.slice(0, maxResults)) {
       await crawler.addRequests([{
         url: link,
         userData: { label: 'companyProfile' },

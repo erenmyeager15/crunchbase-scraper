@@ -1,7 +1,7 @@
 {
   "name": "crunchbase-scraper",
   "version": "1.0.0",
-  "description": "Production-ready Apify Actor that scrapes Crunchbase for company and funding data. Supports company URLs, names, and industry/location search.",
+  "description": "Apify Actor that extracts Crunchbase company and funding data via API-first mode with guarded browser fallback.",
   "type": "module",
   "main": "dist/main.js",
   "scripts": {

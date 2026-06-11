@@ -1,26 +1,42 @@
-# Resume Notes — Crunchbase Scraper (PARKED)
+# Resume Notes - Crunchbase Scraper
 
 ## Status
-Build is fixed, compiles, runs, and is **safe** (guard never saves/charges for blocked, gated, or error pages). Pricing configured: `company-scraped` @ $5.00/1000. On GitHub and pushed to Apify. **Not earning** — Cloudflare blocks it.
 
-## What works
-- Compiles clean; `actor.json` pricing valid (PAY_PER_EVENT `company-scraped`).
-- Input schema fixed (was `type:actor` with invalid `oneOf`/`groups`).
-- Charge guard: only bills when real company data (name + description/website/funding) is extracted.
-- Session warm-up (homepage → org page) is implemented as a Cloudflare-bypass attempt.
+Fixed by adding a reliable API-first path and making browser mode explicit:
 
-## What's blocking (where it stopped)
-- **Cloudflare returns 403** on every request — bare IP, residential US proxy, AND warmed session all 403. Even `crunchbase.com` homepage 403s, so no `cf_clearance` cookie is ever issued.
-- Separately, Crunchbase's funding/investor data is largely **Crunchbase Pro login-gated**, so even past Cloudflare the headline data may be limited.
+- `dataSource: "auto"` uses Crunchbase API mode when `crunchbaseApiKey` is supplied.
+- `dataSource: "api"` requires `crunchbaseApiKey` and avoids Cloudflare entirely.
+- `dataSource: "browser"` keeps the existing Playwright scraper, now with optional `crunchbaseCookies`.
+- Browser mode remains guarded: it never saves or charges for blocked, gated, or empty pages.
 
-## What it needs next (turnkey resume)
-1. A **paid Cloudflare unblocker** — e.g. Apify's anti-blocking/“super” proxy, or a Turnstile-solving service (ScrapingBee / ZenRows / ScraperAPI style). Route requests through it instead of plain Playwright.
-2. OR the **official Crunchbase API** with a key (clean JSON, no Cloudflare) — changes the model but is the reliable path for funding data.
-3. Once a request gets through, parse the embedded `window.__APP_STATE__` / `<script>` JSON (more reliable than the `data-test-id` DOM selectors currently in routes.ts).
+## Why this was needed
 
-## Test command
-```bash
-apify push
-# then run: { "companyNames": ["OpenAI"], "maxResults": 1, "proxyConfiguration": { "useApifyProxy": true, "apifyProxyGroups": ["RESIDENTIAL"], "apifyProxyCountry": "US" } }
+The previous browser-only actor was blocked by Cloudflare before any Crunchbase page could render. Residential proxy and session warm-up were not enough. Crunchbase funding data is also partly plan/API gated, so the official API is the correct production path.
+
+## What works now
+
+- Official API key input: `crunchbaseApiKey` (secret)
+- Browser cookie input: `crunchbaseCookies` (secret)
+- API company resolution from direct URLs and company names
+- Existing output shape retained
+- PAY_PER_EVENT `company-scraped` @ `$0.005`
+- Charge only after `Actor.pushData(record)` succeeds
+
+## Remaining risk
+
+- API field availability depends on the user's Crunchbase API plan and permissions.
+- Browser mode can still fail on Cloudflare if cookies/proxy are weak or expired.
+- Search filters in API mode are best-effort text search; direct URLs or company names are the most reliable inputs.
+
+## Recommended Apify test
+
+```json
+{
+  "dataSource": "api",
+  "crunchbaseApiKey": "YOUR_KEY",
+  "companyNames": ["OpenAI"],
+  "maxResults": 1
+}
 ```
-Watch for: no 403, and `Successfully scraped: OpenAI` with populated fields.
+
+Expected: one valid company record saved, then one `company-scraped` event charged.

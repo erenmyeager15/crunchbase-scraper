@@ -1,14 +1,18 @@
 export interface ActorInput {
-  companyUrls: string[];
-  companyNames: string[];
-  searchIndustry: string;
-  searchLocation: string;
-  searchFundingStage: string;
-  maxResults: number;
-  proxyConfiguration: {
+  companyUrls?: string[];
+  companyNames?: string[];
+  searchIndustry?: string;
+  searchLocation?: string;
+  searchFundingStage?: string;
+  maxResults?: number;
+  dataSource?: 'auto' | 'api' | 'browser';
+  crunchbaseApiKey?: string;
+  crunchbaseCookies?: string;
+  proxyConfiguration?: {
     useApifyProxy: boolean;
     apifyProxyGroups: string[];
     apifyProxyCountry: string;
+    proxyUrls?: string[];
   };
 }
 

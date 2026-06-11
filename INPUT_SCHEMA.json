@@ -1,6 +1,6 @@
 {
   "title": "Crunchbase Scraper Input",
-  "description": "Configure what to scrape from Crunchbase. Provide company URLs, company names, or search by industry/location/funding stage.",
+  "description": "Configure Crunchbase company extraction. Use the official Crunchbase API key for reliable data, or browser mode with optional cookies for public pages.",
   "type": "object",
   "schemaVersion": 1,
   "required": [],
@@ -11,7 +11,31 @@
       "type": "array",
       "editor": "stringList",
       "prefill": [],
+      "default": [],
       "uniqueItems": true
+    },
+    "dataSource": {
+      "title": "Data Source",
+      "description": "Auto uses the Crunchbase API when an API key is supplied, otherwise browser mode.",
+      "type": "string",
+      "editor": "select",
+      "default": "auto",
+      "enum": ["auto", "api", "browser"],
+      "enumTitles": ["Auto", "Crunchbase API", "Browser scraping"]
+    },
+    "crunchbaseApiKey": {
+      "title": "Crunchbase API Key",
+      "description": "Optional official Crunchbase API key. Recommended because it avoids Cloudflare and returns structured company data.",
+      "type": "string",
+      "editor": "textfield",
+      "isSecret": true
+    },
+    "crunchbaseCookies": {
+      "title": "Crunchbase Cookies",
+      "description": "Optional browser cookies for browser mode. Paste a Cookie header or JSON cookie array from an authenticated Crunchbase session.",
+      "type": "string",
+      "editor": "textarea",
+      "isSecret": true
     },
     "companyNames": {
       "title": "Company Names",
@@ -51,7 +75,7 @@
       "type": "integer",
       "minimum": 1,
       "maximum": 10000,
-      "default": 100,
+      "default": 10,
       "editor": "number"
     },
     "proxyConfiguration": {
