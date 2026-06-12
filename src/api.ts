@@ -20,7 +20,6 @@ const ORGANIZATION_FIELD_IDS = [
   'last_funding_total',
   'categories',
   'location_identifiers',
-  'founder_identifiers',
   'linkedin',
   'twitter',
   'facebook',
@@ -191,7 +190,6 @@ function mapApiEntityToRecord(entity: unknown, permalink: string): CompanyRecord
   record.lastFundingType = stringValue(properties.last_funding_type);
   record.lastFundingAmount = moneyValue(properties.last_funding_total);
   record.industriesList = arrayValues(properties.categories);
-  record.foundersList = arrayValues(properties.founder_identifiers);
   record.companyLogoUrl = stringValue(properties.image_url);
   record.linkedInUrl = stringValue(properties.linkedin);
   record.twitterUrl = stringValue(properties.twitter);

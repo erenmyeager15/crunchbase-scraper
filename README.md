@@ -9,7 +9,7 @@ This Apify Actor collects structured company intelligence from Crunchbase:
 - Company name, website, description, logo, and social links
 - Headquarters, employee range, company type, and operating status
 - Funding totals, number of funding rounds, last funding date/type/amount
-- Industries, founders, acquisition, IPO, and stock symbol fields when available
+- Industries, acquisition, IPO, and stock symbol fields when available
 
 ## Data Sources
 
@@ -95,7 +95,6 @@ Crunchbase is aggressively protected by Cloudflare, so browser mode may be block
   "IPODate": null,
   "stockSymbol": null,
   "industriesList": ["Artificial Intelligence", "Machine Learning"],
-  "foundersList": ["Sam Altman", "Greg Brockman"],
   "companyLogoUrl": "https://...",
   "linkedInUrl": "https://www.linkedin.com/company/openai",
   "twitterUrl": "https://twitter.com/openai",
@@ -116,7 +115,13 @@ The actor charges only after a valid company record is saved. Blocked, gated, em
 
 - Use the official Crunchbase API key for production.
 - Browser mode is best-effort because Crunchbase Cloudflare can block even residential proxies.
-- Some funding, investor, and people fields may require Crunchbase API permissions or a paid Crunchbase plan.
+- Some funding and investor fields may require Crunchbase API permissions or a paid Crunchbase plan.
+
+## Responsible Use
+
+This Actor is intended for lawful collection of publicly available information only. Users are responsible for ensuring their use complies with the source website's terms, robots.txt, applicable privacy laws, including India's DPDP Act, and all local regulations.
+
+Do not use this Actor to collect, store, sell, or misuse personal data without a lawful basis. The Actor author is not responsible for misuse by end users.
 
 ## License
 

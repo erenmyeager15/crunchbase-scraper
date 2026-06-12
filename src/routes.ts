@@ -135,11 +135,6 @@ export const COMPANY_ROUTES: Record<string, (ctx: RouteHandlerContext) => Promis
         return Array.from(els).map((el: Element) => el.textContent?.trim()).filter(Boolean) as string[];
       });
 
-      record.foundersList = await page.evaluate(() => {
-        const els = document.querySelectorAll('[data-test-id="founder-name"] a, [aria-label="Founders"] a');
-        return Array.from(els).map((el: Element) => el.textContent?.trim()).filter(Boolean) as string[];
-      });
-
       record.companyLogoUrl = await page.evaluate(() => {
         const el = document.querySelector('img[data-test-id="profile-image"], .profile-logo img, img[alt*="logo"]');
         return el?.getAttribute('src') || null;

@@ -39,7 +39,6 @@ export interface CompanyRecord {
   IPODate: string | null;
   stockSymbol: string | null;
   industriesList: string[];
-  foundersList: string[];
   companyLogoUrl: string | null;
   linkedInUrl: string | null;
   twitterUrl: string | null;
@@ -71,7 +70,6 @@ export function makeDefaultRecord(url: string): CompanyRecord {
     IPODate: null,
     stockSymbol: null,
     industriesList: [],
-    foundersList: [],
     companyLogoUrl: null,
     linkedInUrl: null,
     twitterUrl: null,

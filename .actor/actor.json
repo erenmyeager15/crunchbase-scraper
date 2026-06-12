@@ -20,7 +20,7 @@
       }
     }
   },
-  "categories": ["BUSINESS", "LEAD_GENERATION", "SEO_TOOLS"],
+  "categories": ["BUSINESS", "SEO_TOOLS"],
   "minMemoryMbytes": 2048,
   "maxMemoryMbytes": 8192,
   "defaultRunOptions": {
@@ -52,7 +52,6 @@
               "lastFundingType",
               "lastFundingAmount",
               "industriesList",
-              "foundersList",
               "linkedInUrl",
               "scrapedTimestamp"
             ]
